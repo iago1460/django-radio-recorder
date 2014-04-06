@@ -54,7 +54,7 @@ class SchedulesThread(threading.Thread):
         if now is None:
             now = datetime.datetime.now()
             now = now.replace(microsecond = 0)
-        for row in self.schedule_list:
+        for row in self.schedule_list:  # TODO: dictionary
             schedule = datetime.datetime.strptime(row["start"], '%Y-%m-%d %H:%M:%S')
             if now == schedule:
                 return {"id": int(row["id"]), "duration": int(row["duration"]), "title": row["title"], "start": schedule}

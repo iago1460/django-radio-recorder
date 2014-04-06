@@ -24,6 +24,7 @@ def make_sure_path_exists(path):
 def minutes_to_timedelta(minutes):
     return datetime.timedelta(minutes = minutes)
 
+
 def main(argv):
     CONFIG_FILE = 'settings.ini'
     global config
@@ -35,7 +36,11 @@ def main(argv):
     # logging.basicConfig(filename = config.get('SETTINGS', 'log_file'), level = logging.DEBUG)
     logging.basicConfig(filename = config.get('SETTINGS', 'log_file'), level = logging.DEBUG, format = '%(asctime)s %(message)s', datefmt = '%Y-%m-%d %H:%M:%S')
 
-    for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
+    if sys.platform == 'win32':
+        signals = [signal.SIGTERM, signal.SIGINT]
+    else:
+        signals = [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]
+    for sig in signals:
         signal.signal(sig, handler)
 
     make_sure_path_exists(config.get('SETTINGS', 'recording_folder'))
@@ -53,29 +58,37 @@ def main(argv):
         info = schedules_thread.is_time_to_record()
         if info:
             global recorder_thread
-            name = info['start'].strftime('%Y-%m-%d %H:%M:%S ') + info['title']
-            recorder_thread = RecorderThread(file_name = name, seconds = info['duration'])
-            recorder_thread.start()
+            name = info['start'].strftime('%Y-%m-%d %H-%M-%S ') + info['title']
+            file_path = config.get('SETTINGS', 'recording_folder') + name + '.wav'
+
+            recorder_thread = RecorderThread(name = name, file_path = file_path, seconds = info['duration'])
             logging.debug('Starting recording: ' + name)
+            recorder_thread.start()
             recorder_thread.join()
+
             recorder_thread = None
         time.sleep(0.3)
 
 
 class RecorderThread(threading.Thread):
-    def __init__(self, file_name, seconds):
+    def __init__(self, name, file_path, seconds):
         threading.Thread.__init__(self)
         self.seconds = seconds
-        self.file_name = file_name
+        self.name = name
+        self.file_path = file_path
 
     def run(self):
         try:
             rec = Recorder(channels = 2)
-            with rec.open(config.get('SETTINGS', 'recording_folder') + self.file_name + '.wav', 'wb') as recfile:
+            with rec.open(fname = self.file_path) as recfile:
                 recfile.record(duration = self.seconds)
-            logging.info('Recorder finished: ' + self.file_name)
+            logging.info('Recorder finished: ' + self.name)
         except Exception as e:
-            logging.error('Recorder aborted: ' + self.file_name + ', reason: ' + e)
+            print ('Recorder of ' + self.name + ' aborted: ' + str(type(e)) + ' - ' + str(e))
+            logging.error('Recorder of ' + self.name + ' aborted: ' + str(type(e)) + ' - ' + str(e))
+
+
+
 
 def handler(signum = None, frame = None):
     logging.debug('Signal handler called with signal:' + str(signum))
