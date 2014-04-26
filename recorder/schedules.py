@@ -5,7 +5,7 @@ mutex.release()
 """
 
 import json, requests, datetime, time
-from pprint import pprint
+import logging
 import threading
 
 from requests.exceptions import RequestException, ConnectionError, HTTPError, URLRequired, TooManyRedirects
@@ -15,10 +15,7 @@ class SchedulesThread(threading.Thread):
     def __init__(self, config, stop_event, offline = False):
         threading.Thread.__init__(self)
         self.schedule_list = []
-        if offline == True:
-            self.offline = True
-        else:
-            self.offline = False
+        self.offline = offline
         self.stop_event = stop_event
         self.config = config
 
@@ -32,7 +29,7 @@ class SchedulesThread(threading.Thread):
                 self.stop_event.wait(self.config.getint('SETTINGS', 'update_time'))
             except Exception as e:
                 # time.sleep(int(self.config.get('SETTINGS', 'retry_time')))
-                print 'Error actualizando horario: ' + str(e)
+                logging.error('Error at schedules ' + str(type(e)) + ' - ' + str(e))
                 self.stop_event.wait(self.config.getint('SETTINGS', 'retry_time'))
 
     def update_recoder_list(self):
