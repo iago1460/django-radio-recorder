@@ -2,26 +2,24 @@
 import errno
 import logging
 import os
-from pprint import pprint
-import shlex
 import sys, signal, time, datetime, ConfigParser, Queue
 import threading
 
-import schedules, subprocess
+from recorder import RecorderException, RecorderThread
+from schedules import SchedulesThread
+from upload import UploadThread
 
 
 recorder_thread = None
 schedules_stop = None
+upload_stop = None
 recorder_stop = None
 main_stop = None
 schedules_thread = None
+upload_thread = None
 config = None
 
-class RecorderException(Exception):
-    def __init__(self, msg):
-        self.msg = msg
-    def __str__(self):
-        return self.msg
+
 
 def make_sure_path_exists(path):
     try:
@@ -54,16 +52,23 @@ def main(argv):
 
     make_sure_path_exists(config.get('SETTINGS', 'recording_folder'))
     make_sure_path_exists(config.get('SETTINGS', 'complete_folder'))
+    make_sure_path_exists(config.get('SETTINGS', 'uploaded_folder'))
 
 
     logging.info('Starting system')
 
     try:
         global schedules_stop
-        global schedules_thread
         schedules_stop = threading.Event()
-        schedules_thread = schedules.SchedulesThread(config = config, offline = config.getboolean('SETTINGS', 'offline_mode'), stop_event = schedules_stop)
+        global schedules_thread
+        schedules_thread = SchedulesThread(config = config, offline = config.getboolean('SETTINGS', 'offline_mode'), stop_event = schedules_stop)
         schedules_thread.start()
+
+        global upload_stop
+        upload_stop = threading.Event()
+        global upload_thread
+        upload_thread = UploadThread(config = config, stop_event = upload_stop)
+        upload_thread.start()
 
         global recorder_stop
         recorder_stop = threading.Event()
@@ -86,11 +91,9 @@ def main(argv):
                     raise exception
 
             if info and (recorder_thread is None or (recorder_thread is not None and not recorder_thread.is_alive())):
-                name = info['start'].strftime('%Y-%m-%d %H-%M-%S ') + info['title']
-                file_path = config.get('SETTINGS', 'recording_folder') + name + '.' + config.get('SETTINGS', 'file_extension')
-
-                recorder_thread = RecorderThread(file_name = name, file_path = file_path, exceptions = exceptions, seconds = info['duration'],
-                                                 stop_event = recorder_stop, command = str(config.get('SETTINGS', 'recorder_command')))
+                name = info['start'].strftime('%Y-%m-%d %H-%M-%S ') + info['title'] + '.' + config.get('SETTINGS', 'file_extension')
+                recorder_thread = RecorderThread(config = config, file_name = name, exceptions = exceptions, seconds = info['duration'],
+                                                 stop_event = recorder_stop)
                 logging.debug('Starting recording: ' + name)
                 recorder_thread.start()
 
@@ -105,40 +108,6 @@ def main(argv):
         close_all()
 
 
-class RecorderThread(threading.Thread):
-    def __init__(self, file_name, file_path, command, seconds, stop_event, exceptions):
-        threading.Thread.__init__(self)
-        self.seconds = seconds
-        self.file_name = file_name
-        self.file_path = file_path
-        self.stop_event = stop_event
-        self.exceptions = exceptions
-        self.command = []
-        for row in shlex.split(command):
-            self.command.append(row.replace ("[OUTPUT]", file_path))
-
-    def run(self):
-        try:
-            start = datetime.datetime.now()
-            process = subprocess.Popen(self.command)
-            return_code = process.poll()
-            if return_code is not None:
-                raise RecorderException('An exception occurred while starting your command: command exited with code ' + str(-return_code))
-            while not self.stop_event.is_set() and datetime.datetime.now() - start < datetime.timedelta(seconds = self.seconds):
-
-                return_code = process.poll()
-                if return_code is not None:
-                    raise RecorderException('An exception occurred while executing your command: command exited with code ' + str(-return_code))
-
-                self.stop_event.wait(0.1)
-            process.terminate()
-        except OSError:
-            e = RecorderException(msg = 'Recorder failed: Please check your libraries and your command in settings.ini')
-            self.exceptions.put(e)
-        except RecorderException as e:
-            self.exceptions.put(e)
-        except Exception as e:
-            self.exceptions.put(e)
 
 
 
@@ -150,6 +119,8 @@ def close_all():
         logging.error('Recorder of ' + str(recorder_stop.file_name) + ' aborted')
         recorder_stop.set()
         recorder_thread.join()
+    upload_stop.set()
+    upload_thread.join()
     logging.info('Programm closed')
     # time.sleep(1.5)
     sys.exit(0)
