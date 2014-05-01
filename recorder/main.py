@@ -64,11 +64,12 @@ def main(argv):
         schedules_thread = SchedulesThread(config = config, offline = config.getboolean('SETTINGS', 'offline_mode'), stop_event = schedules_stop)
         schedules_thread.start()
 
-        global upload_stop
-        upload_stop = threading.Event()
-        global upload_thread
-        upload_thread = UploadThread(config = config, stop_event = upload_stop)
-        upload_thread.start()
+        if config.getboolean('FTP', 'enable'):
+            global upload_stop
+            upload_stop = threading.Event()
+            global upload_thread
+            upload_thread = UploadThread(config = config, stop_event = upload_stop)
+            upload_thread.start()
 
         global recorder_stop
         recorder_stop = threading.Event()
@@ -116,11 +117,12 @@ def close_all():
     schedules_stop.set()
     schedules_thread.join()
     if recorder_thread is not None and recorder_thread.is_alive():
-        logging.error('Recorder of ' + str(recorder_stop.file_name) + ' aborted')
+        logging.error('Recorder of ' + str(recorder_thread.file_name) + ' aborted')
         recorder_stop.set()
         recorder_thread.join()
-    upload_stop.set()
-    upload_thread.join()
+    if upload_thread is not None:
+        upload_stop.set()
+        upload_thread.join()
     logging.info('Programm closed')
     # time.sleep(1.5)
     sys.exit(0)
