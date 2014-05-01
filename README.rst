@@ -2,6 +2,7 @@
 RadioCo recorder
 ================
 **A recorder program**.
+
 This program communicates with RadioCo
 
 Main Program
@@ -18,6 +19,9 @@ http://radioco.org/
 Installation
 ============
 
+Requirements
+------------
+
 - Python 2.7
 
 Install requirements::
@@ -27,3 +31,11 @@ Install requirements::
 Install avconv::
 
     sudo apt-get install libav-tools
+
+
+Usage
+-----
+
+run command::
+	
+	python main.py
