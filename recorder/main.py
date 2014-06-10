@@ -33,43 +33,46 @@ def minutes_to_timedelta(minutes):
 
 
 def main(argv):
-    CONFIG_FILE = 'settings.ini'
-    global config
-    config = ConfigParser.RawConfigParser()
-    config.read(CONFIG_FILE)
-
-    requests_log = logging.getLogger("requests")
-    requests_log.setLevel(logging.WARNING)
-    # logging.basicConfig(filename = config.get('SETTINGS', 'log_file'), level = logging.DEBUG)
-    logging.basicConfig(filename = config.get('SETTINGS', 'log_file'), level = logging.DEBUG, format = '%(asctime)s %(message)s', datefmt = '%Y-%m-%d %H:%M:%S')
-
-    if sys.platform == 'win32':
-        signals = [signal.SIGTERM, signal.SIGINT]
-    else:
-        signals = [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]
-    for sig in signals:
-        signal.signal(sig, handler)
-
-    make_sure_path_exists(config.get('SETTINGS', 'recording_folder'))
-    make_sure_path_exists(config.get('SETTINGS', 'complete_folder'))
-    make_sure_path_exists(config.get('SETTINGS', 'uploaded_folder'))
-
-
-    logging.info('Starting system')
 
     try:
-        global schedules_stop
-        schedules_stop = threading.Event()
-        global schedules_thread
-        schedules_thread = SchedulesThread(config = config, offline = config.getboolean('SETTINGS', 'offline_mode'), stop_event = schedules_stop)
-        schedules_thread.start()
+        CONFIG_FILE = 'settings.ini'
+        global config
+        config = ConfigParser.RawConfigParser()
+        config.read(CONFIG_FILE)
 
-        if config.getboolean('FTP', 'enable'):
+        requests_log = logging.getLogger("requests")
+        requests_log.setLevel(logging.WARNING)
+        # logging.basicConfig(filename = config.get('SETTINGS', 'log_file'), level = logging.DEBUG)
+        logging.basicConfig(filename = config.get('SETTINGS', 'log_file'), level = logging.DEBUG, format = '%(asctime)s %(message)s', datefmt = '%Y-%m-%d %H:%M:%S')
+
+        if sys.platform == 'win32':
+            signals = [signal.SIGTERM, signal.SIGINT]
+        else:
+            signals = [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]
+        for sig in signals:
+            signal.signal(sig, handler)
+
+
+        logging.info('Starting system')
+        offline_mode = config.getboolean('SETTINGS', 'offline_mode')
+
+        make_sure_path_exists(config.get('SETTINGS', 'recording_folder'))
+        make_sure_path_exists(config.get('SETTINGS', 'complete_folder'))
+        if not offline_mode:
+            if config.get('SETTINGS', 'token') == None or config.get('SETTINGS', 'token') == '':
+                raise ConfigParser.NoOptionError('token', 'SETTINGS')
+            make_sure_path_exists(config.get('SETTINGS', 'uploaded_folder'))
             global upload_stop
             upload_stop = threading.Event()
             global upload_thread
             upload_thread = UploadThread(config = config, stop_event = upload_stop)
             upload_thread.start()
+
+        global schedules_stop
+        schedules_stop = threading.Event()
+        global schedules_thread
+        schedules_thread = SchedulesThread(config = config, offline = offline_mode, stop_event = schedules_stop)
+        schedules_thread.start()
 
         global recorder_stop
         recorder_stop = threading.Event()
@@ -92,7 +95,7 @@ def main(argv):
                     raise exception
 
             if info and (recorder_thread is None or (recorder_thread is not None and not recorder_thread.is_alive())):
-                name = info['start'].strftime('%Y-%m-%d %H-%M-%S ') + info['title'] + '.' + config.get('SETTINGS', 'file_extension')
+                name = info['start'].strftime('%Y-%m-%d %H-%M-%S ') + str(info['id']) + ' ' + info['title'] + '.' + config.get('SETTINGS', 'file_extension')
                 recorder_thread = RecorderThread(config = config, file_name = name, exceptions = exceptions, seconds = info['duration'],
                                                  stop_event = recorder_stop)
                 logging.debug('Starting recording: ' + name)
@@ -113,9 +116,12 @@ def main(argv):
 
 
 def close_all():
-    main_stop.set()
-    schedules_stop.set()
-    schedules_thread.join()
+    if main_stop:
+        main_stop.set()
+    if schedules_stop:
+        schedules_stop.set()
+    if schedules_thread:
+        schedules_thread.join()
     if recorder_thread is not None and recorder_thread.is_alive():
         logging.error('Recorder of ' + str(recorder_thread.file_name) + ' aborted')
         recorder_stop.set()

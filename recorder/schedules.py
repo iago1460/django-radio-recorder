@@ -36,7 +36,14 @@ class SchedulesThread(threading.Thread):
         params = dict(
             start = datetime.datetime.now().strftime('%Y-%m-%d'),
         )
-        resp = requests.get(url = self.config.get('SETTINGS', 'url'), params = params)
+        headers = {'content-type' : 'application/json', 'Authorization': 'Token ' + self.config.get('SETTINGS', 'token')}
+
+        resp = requests.get(url = self.config.get('SETTINGS', 'url') + 'recording_schedules/', params = params,
+                            headers = headers)
+
+        if resp.status_code != 200:
+            resp.raise_for_status()
+
         # except (HTTPError, RequestException, ConnectionError, HTTPError, URLRequired, TooManyRedirects) as e:
         data = json.loads(resp.content)
         with open(self.config.get('SETTINGS', 'schedule_file'), 'w') as outfile:
