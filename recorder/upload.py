@@ -28,12 +28,12 @@ class UploadThread(threading.Thread):
         self.config = config
         socket.setdefaulttimeout(self.config.getint('SETTINGS', 'socket_timeout'))
 
-    def notify_server(self, schedule_id, date, file_name, mime_type, length):
+    def notify_server(self, programme_id, date, file_name, mime_type, length):
         not_sended = True
 
         data = {
             'date' : date,
-            'schedule_id' : schedule_id,
+            'programme_id' : programme_id,
             'file_name' : file_name,
             'mime_type' : mime_type,
             'length' : length,
@@ -84,7 +84,7 @@ class UploadThread(threading.Thread):
                         # get id and change name
                         m = re.match("(?P<DATE>[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}-[0-9]{2}-[0-9]{2}) (?P<ID>[0-9]*)(?P<NEX>.*)", file_name)
                         date = m.group('DATE')
-                        schedule_id = int(m.group('ID'))
+                        programme_id = int(m.group('ID'))
                         new_file_name = m.group('DATE') + m.group('NEX')
                     except ValueError, AttributeError:
                         raise UploadException('The name pattern \"' + file_name + '\" it\'s incorrect')
@@ -96,7 +96,7 @@ class UploadThread(threading.Thread):
                     length = os.path.getsize(file_path)
 
                     # notify server
-                    self.notify_server(schedule_id, date, new_file_name, mime_type, length)
+                    self.notify_server(programme_id, date, new_file_name, mime_type, length)
 
                     # upload file
                     if self.config.getboolean('FTP', 'enable'):
