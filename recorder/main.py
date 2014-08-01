@@ -95,8 +95,9 @@ def main(argv):
                     raise exception
 
             if info and (recorder_thread is None or (recorder_thread is not None and not recorder_thread.is_alive())):
-                name = info['start'].strftime('%Y-%m-%d %H-%M-%S ') + str(info['id']) + ' ' + info['title'] + '.' + config.get('SETTINGS', 'file_extension')
-                recorder_thread = RecorderThread(config = config, file_name = name, exceptions = exceptions, seconds = info['duration'],
+                name = info['issue_date'] + ' ' + str(info['id']) + ' ' + info['title'] + '.' + config.get('SETTINGS', 'file_extension')
+
+                recorder_thread = RecorderThread(config = config, file_name = name, exceptions = exceptions, info = info,
                                                  stop_event = recorder_stop)
                 logging.debug('Starting recording: ' + name)
                 recorder_thread.start()

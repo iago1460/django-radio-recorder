@@ -61,6 +61,7 @@ class SchedulesThread(threading.Thread):
         for row in self.schedule_list:  # TODO: dictionary
             schedule = datetime.datetime.strptime(row["start"], '%Y-%m-%d %H:%M:%S')
             if now == schedule:
-                return {"id": int(row["id"]), "duration": int(row["duration"]), "title": row["title"], "start": schedule}
+                return row
+                # {"id": int(row["id"]), "duration": int(row["duration"]), "title": row["title"], "start": schedule}
         return None
 

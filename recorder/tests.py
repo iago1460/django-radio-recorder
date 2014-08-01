@@ -26,7 +26,7 @@ class TestSequenceFunctions(unittest.TestCase):
 
         schedules.schedule_list = [{"start": "2014-03-29 10:30:00", "duration": 120, "id": 2, "title": "interview"},
                                    {"start": now_str, "duration": 1, "id": 1, "title": "on-live"}]
-        self.assertEqual({"start": now, "duration": 1, "id": 1, "title": "on-live"}, schedules.is_time_to_record(now))
+        self.assertEqual({"start": now_str, "duration": 1, "id": 1, "title": "on-live"}, schedules.is_time_to_record(now))
 
 
 if __name__ == '__main__':

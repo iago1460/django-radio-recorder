@@ -14,17 +14,44 @@ class RecorderException(Exception):
         return self.msg
 
 class RecorderThread(threading.Thread):
-    def __init__(self, config, file_name, seconds, stop_event, exceptions):
+    def __init__(self, config, file_name, info, stop_event, exceptions):
         threading.Thread.__init__(self)
         self.config = config
-        self.seconds = seconds
+        self.seconds = int(info['duration'])
+
+        self.title = ''
+        self.author = ''
+        self.album = ''
+        self.track = ''
+        self.genre = ''
+        self.comment = 'Made by RadioCo www.RadioCo.org'
+        if 'title' in info and info['title']:
+            self.title = str(info['title'])
+        if 'author' in info and info['author']:
+            self.author = str(info['author'])
+        if 'album' in info and info['album']:
+            self.album = str(info['album'])
+        if 'track' in info and info['track']:
+            self.track = str(info['track'])
+        if 'genre' in info and info['genre']:
+            self.genre = str(info['genre'])
+
         self.file_name = file_name
         self.file_path = config.get('SETTINGS', 'recording_folder') + file_name
         self.stop_event = stop_event
         self.exceptions = exceptions
         self.command = []
         for row in shlex.split(str(config.get('SETTINGS', 'recorder_command'))):
-            self.command.append(row.replace ("[OUTPUT]", self.file_path))
+            print row
+            line = row.replace ("[OUTPUT]", self.file_path)
+            line = line.replace ("[TITLE]", self.title)
+            line = line.replace ("[AUTHOR]", self.author)
+            line = line.replace ("[ALBUM]", self.album)
+            line = line.replace ("[TRACK]", self.track)
+            line = line.replace ("[GENRE]", self.genre)
+            line = line.replace ("[COMMENT]", self.comment)
+            self.command.append(line)
+            print line
 
     def run(self):
         try:
