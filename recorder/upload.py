@@ -83,6 +83,8 @@ class UploadThread(threading.Thread):
                     try:
                         # get id and change name
                         m = re.match("(?P<DATE>[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}-[0-9]{2}-[0-9]{2}) (?P<ID>[0-9]*)(?P<NEX>.*)", file_name)
+                        if not m:
+                            raise ValueError()
                         date = m.group('DATE')
                         programme_id = int(m.group('ID'))
                         new_file_name = m.group('DATE') + m.group('NEX')

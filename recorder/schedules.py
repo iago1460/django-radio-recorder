@@ -34,7 +34,7 @@ class SchedulesThread(threading.Thread):
 
     def update_recoder_list(self):
         params = dict(
-            start = datetime.datetime.now().strftime('%Y-%m-%d'),
+            start = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         )
         headers = {'content-type' : 'application/json', 'Authorization': 'Token ' + self.config.get('SETTINGS', 'token')}
 
@@ -59,7 +59,7 @@ class SchedulesThread(threading.Thread):
             now = datetime.datetime.now()
             now = now.replace(microsecond = 0)
         for row in self.schedule_list:  # TODO: dictionary
-            schedule = datetime.datetime.strptime(row["start"], '%Y-%m-%d %H:%M:%S')
+            schedule = datetime.datetime.strptime(row["start"], '%Y-%m-%d %H-%M-%S')
             if now == schedule:
                 return row
                 # {"id": int(row["id"]), "duration": int(row["duration"]), "title": row["title"], "start": schedule}
