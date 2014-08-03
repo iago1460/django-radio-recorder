@@ -36,7 +36,9 @@ class SchedulesThread(threading.Thread):
         params = dict(
             start = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         )
-        headers = {'content-type' : 'application/json', 'Authorization': 'Token ' + self.config.get('SETTINGS', 'token')}
+        headers = {'content-type' : 'application/json',
+                   'Accept-Language': self.config.get('SETTINGS', 'metadata_language'),
+                   'Authorization': 'Token ' + self.config.get('SETTINGS', 'token')}
 
         resp = requests.get(url = self.config.get('SETTINGS', 'url') + 'recording_schedules/', params = params,
                             headers = headers)
