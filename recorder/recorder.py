@@ -40,34 +40,46 @@ class RecorderThread(threading.Thread):
         self.file_path = config.get('SETTINGS', 'recording_folder') + file_name
         self.stop_event = stop_event
         self.exceptions = exceptions
-        self.command = []
+        self.command_1 = []
         for row in shlex.split(str(config.get('SETTINGS', 'recorder_command'))):
-            print row
-            line = row.replace ("[OUTPUT]", self.file_path)
-            line = line.replace ("[TITLE]", self.title)
-            line = line.replace ("[AUTHOR]", self.author)
-            line = line.replace ("[ALBUM]", self.album)
-            line = line.replace ("[TRACK]", self.track)
-            line = line.replace ("[GENRE]", self.genre)
-            line = line.replace ("[COMMENT]", self.comment)
-            self.command.append(line)
-            print line
+            self.command_1.append(self.replace(row))
+
+        self.command_2 = []
+        for row in shlex.split(str(config.get('SETTINGS', 'recorder_command_2'))):
+            self.command_2.append(self.replace(row))
+
+    def replace(self, string):
+        line = string.replace ("[OUTPUT]", self.file_path)
+        line = line.replace ("[TITLE]", self.title)
+        line = line.replace ("[AUTHOR]", self.author)
+        line = line.replace ("[ALBUM]", self.album)
+        line = line.replace ("[TRACK]", self.track)
+        line = line.replace ("[GENRE]", self.genre)
+        line = line.replace ("[COMMENT]", self.comment)
+        return line
 
     def run(self):
         try:
             start = datetime.datetime.now()
-            process = subprocess.Popen(self.command)
-            return_code = process.poll()
-            if return_code is not None:
+            process_1 = subprocess.Popen(self.command_1, stdout = subprocess.PIPE)
+            process_2 = subprocess.Popen(self.command_2, stdin = process_1.stdout)
+            return_code = process_1.poll()
+            return_code_2 = process_2.poll()
+            if return_code is not None or return_code_2 is not None:
+                if return_code_2:
+                    return_code = return_code_2
                 raise RecorderException('An exception occurred while starting your command: command exited with code ' + str(-return_code))
             while not self.stop_event.is_set() and datetime.datetime.now() - start < datetime.timedelta(seconds = self.seconds):
 
-                return_code = process.poll()
-                if return_code is not None:
+                return_code = process_1.poll()
+                return_code_2 = process_2.poll()
+                if return_code is not None or return_code_2 is not None:
+                    if return_code_2:
+                        return_code = return_code_2
                     raise RecorderException('An exception occurred while executing your command: command exited with code ' + str(-return_code))
 
                 self.stop_event.wait(0.1)
-            process.terminate()
+            process_1.terminate()
 
             post_actions_thread = PostRecorderThread(config = self.config, file_path = self.file_path, file_name = self.file_name)
             post_actions_thread.start()
