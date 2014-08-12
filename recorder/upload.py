@@ -40,7 +40,7 @@ class UploadThread(threading.Thread):
         }
         headers = {'content-type' : 'application/json', 'Authorization': 'Token ' + self.config.get('SETTINGS', 'token')}
 
-        while not_sended:
+        while not_sended and not self.stop_event.is_set():
             try:
                 resp = requests.get(url = self.config.get('SETTINGS', 'url') + 'submit_recorder/', params = data,
                     headers = headers)

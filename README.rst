@@ -24,14 +24,24 @@ Requirements
 
 - Python 2.7
 
+
+
+In the project folder.
+
+Optional, but recommended steps to install virtualenv::
+	
+	sudo apt-get install python-virtualenv
+	virtualenv .
+ 	source bin/activate
+ 
 Install requirements::
 
 	pip install -r requirements.txt
 
-Install avconv::
+Install arecorder and oggenc::
 
-    sudo apt-get install libav-tools
-
+    sudo apt-get install alsa-utils
+    sudo apt-get install vorbis-tools
 
 Usage
 -----
