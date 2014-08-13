@@ -36,6 +36,7 @@ Optional, but recommended steps to install virtualenv::
  
 Install requirements::
 
+	sudo apt-get install python-dev
 	pip install -r requirements.txt
 
 Install arecorder and oggenc::
