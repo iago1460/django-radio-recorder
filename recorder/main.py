@@ -5,7 +5,7 @@ import os
 import sys, signal, time, datetime, ConfigParser, Queue
 import threading
 
-from recorder import RecorderException, RecorderThread
+from recorder import RecorderException, RecorderThread, PostRecorderThread
 from schedules import SchedulesThread
 from upload import UploadThread
 
@@ -19,7 +19,16 @@ schedules_thread = None
 upload_thread = None
 config = None
 
+post_actions_threads_list = []
 
+def join_post_actions():
+    global post_actions_threads_list
+    for thread in post_actions_threads_list:
+        if not thread.is_alive():
+            thread.join(1)
+            post_actions_threads_list.remove(thread)
+            return True
+    return False
 
 def make_sure_path_exists(path):
     try:
@@ -96,12 +105,23 @@ def main(argv):
 
             if info and (recorder_thread is None or (recorder_thread is not None and not recorder_thread.is_alive())):
                 name = info['issue_date'] + ' ' + str(info['id']) + ' ' + info['programme_name'] + '.' + config.get('SETTINGS', 'file_extension')
+                file_path = config.get('SETTINGS', 'recording_folder') + name
+                global post_actions_threads_list
 
-                recorder_thread = RecorderThread(config = config, file_name = name, exceptions = exceptions, info = info,
+                if recorder_thread is not None:
+                    # Do post actions
+                    post_actions_thread = PostRecorderThread(config = config, file_path = recorder_thread.file_path, file_name = recorder_thread.file_name)
+                    post_actions_thread.start()
+                    post_actions_threads_list.append(post_actions_thread)
+                    # join dead thread
+                    recorder_thread.join(1)
+
+                recorder_thread = RecorderThread(config = config, file_name = name, file_path = file_path, exceptions = exceptions, info = info,
                                                  stop_event = recorder_stop)
                 logging.debug('Starting recording: ' + name)
                 recorder_thread.start()
 
+            join_post_actions()
             time.sleep(0.3)
     except RecorderException as e:
         print e

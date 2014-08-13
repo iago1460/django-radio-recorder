@@ -123,8 +123,9 @@ class UploadThread(threading.Thread):
                     pass
                 self.stop_event.wait(self.config.getint('SETTINGS', 'retry_time'))
             except Exception as e:
-                logging.error('Error at upload ' + str(type(e)) + ' - ' + str(e))
-                self.stop_event.wait(self.config.getint('SETTINGS', 'retry_time'))
+                msg = 'Error at upload ' + str(type(e)) + ' - ' + str(e)
+                print msg
+                logging.error(msg)
                 try:
                     file.close()
                 except Exception:

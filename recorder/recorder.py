@@ -14,7 +14,7 @@ class RecorderException(Exception):
         return self.msg
 
 class RecorderThread(threading.Thread):
-    def __init__(self, config, file_name, info, stop_event, exceptions):
+    def __init__(self, config, file_name, file_path, info, stop_event, exceptions):
         threading.Thread.__init__(self)
         self.config = config
         self.seconds = int(info['duration'])
@@ -37,7 +37,7 @@ class RecorderThread(threading.Thread):
             self.genre = str(info['genre'])
 
         self.file_name = file_name
-        self.file_path = config.get('SETTINGS', 'recording_folder') + file_name
+        self.file_path = file_path
         self.stop_event = stop_event
         self.exceptions = exceptions
         self.command_1 = []
@@ -81,8 +81,9 @@ class RecorderThread(threading.Thread):
                 self.stop_event.wait(0.1)
             process_1.terminate()
 
-            post_actions_thread = PostRecorderThread(config = self.config, file_path = self.file_path, file_name = self.file_name)
-            post_actions_thread.start()
+            # avoid zombies
+            process_1.wait()
+            process_2.wait()
 
         except OSError:
             e = RecorderException(msg = 'Recorder failed: Please check your libraries and your command in settings.ini')
@@ -102,4 +103,9 @@ class PostRecorderThread(threading.Thread):
         self.file_name = file_name
 
     def run(self):
-        shutil.move(self.file_path, self.config.get('SETTINGS', 'complete_folder') + self.file_name)
+        try:
+            shutil.move(self.file_path, self.config.get('SETTINGS', 'complete_folder') + self.file_name)
+        except Exception as e:
+            msg = 'Error at postRecorder ' + str(type(e)) + ' - ' + str(e)
+            print msg
+            logging.error(msg)
