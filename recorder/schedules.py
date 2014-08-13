@@ -28,8 +28,9 @@ class SchedulesThread(threading.Thread):
                 # time.sleep(int(self.config.get('SETTINGS', 'update_time')))
                 self.stop_event.wait(self.config.getint('SETTINGS', 'update_time'))
             except Exception as e:
-                # time.sleep(int(self.config.get('SETTINGS', 'retry_time')))
-                logging.error('Error at schedules ' + str(type(e)) + ' - ' + str(e))
+                msg = 'Error at schedules ' + str(type(e)) + ' - ' + str(e)
+                print msg
+                logging.error(msg)
                 self.stop_event.wait(self.config.getint('SETTINGS', 'retry_time'))
 
     def update_recoder_list(self):

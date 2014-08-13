@@ -103,19 +103,20 @@ def main(argv):
                     # exc_type, exc_obj, exc_trace = exc
                     raise exception
 
-            if info and (recorder_thread is None or (recorder_thread is not None and not recorder_thread.is_alive())):
-                name = info['issue_date'] + ' ' + str(info['id']) + ' ' + info['programme_name'] + '.' + config.get('SETTINGS', 'file_extension')
-                file_path = config.get('SETTINGS', 'recording_folder') + name
-                global post_actions_threads_list
-
-                if recorder_thread is not None:
+            if recorder_thread is not None and not recorder_thread.is_alive():
+                    global post_actions_threads_list
                     # Do post actions
                     post_actions_thread = PostRecorderThread(config = config, file_path = recorder_thread.file_path, file_name = recorder_thread.file_name)
                     post_actions_thread.start()
                     post_actions_threads_list.append(post_actions_thread)
                     # join dead thread
                     recorder_thread.join(1)
+                    recorder_thread = None
 
+
+            if info and recorder_thread is None:
+                name = info['issue_date'] + ' ' + str(info['id']) + ' ' + info['programme_name'] + '.' + config.get('SETTINGS', 'file_extension')
+                file_path = config.get('SETTINGS', 'recording_folder') + name
                 recorder_thread = RecorderThread(config = config, file_name = name, file_path = file_path, exceptions = exceptions, info = info,
                                                  stop_event = recorder_stop)
                 logging.debug('Starting recording: ' + name)
