@@ -5,7 +5,9 @@ from pprint import pprint
 import shlex
 import shutil
 import subprocess
+import sys
 import threading
+
 
 class RecorderException(Exception):
     def __init__(self, msg):
@@ -69,6 +71,19 @@ class RecorderThread(threading.Thread):
                 if return_code_2:
                     return_code = return_code_2
                 raise RecorderException('An exception occurred while starting your command: command exited with code ' + str(-return_code))
+
+            try:
+                # Change priority
+                import psutil
+                p = psutil.Process(process_1.pid)
+                if sys.platform == 'win32':
+                    p.set_nice(psutil.REALTIME_PRIORITY_CLASS)
+                else:
+                    p.ionice(psutil.IOPRIO_CLASS_RT)  # set real time
+                    p.nice(-19)  # set very high priority
+            except Exception:
+                print 'Warning: failed to set higher priority.'
+
             while not self.stop_event.is_set() and datetime.datetime.now() - start < datetime.timedelta(seconds = self.seconds):
 
                 return_code = process_1.poll()

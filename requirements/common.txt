@@ -1,3 +1,4 @@
 # requirements/common.txt
 requests
 python-magic
+psutil
