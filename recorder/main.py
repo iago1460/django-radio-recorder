@@ -117,6 +117,12 @@ def main(argv):
             if info and recorder_thread is None:
                 name = info['issue_date'] + ' ' + str(info['id']) + ' ' + info['programme_name'] + '.' + config.get('SETTINGS', 'file_extension')
                 file_path = config.get('SETTINGS', 'recording_folder') + name
+
+                # fix duration
+                now = datetime.datetime.now()
+                delay = (now - datetime.datetime.strptime(info["start"], '%Y-%m-%d %H-%M-%S')).seconds
+                info['duration'] = int(info['duration']) - delay
+
                 recorder_thread = RecorderThread(config = config, file_name = name, file_path = file_path, exceptions = exceptions, info = info,
                                                  stop_event = recorder_stop)
                 logging.debug('Starting recording: ' + name)

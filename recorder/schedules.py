@@ -60,10 +60,10 @@ class SchedulesThread(threading.Thread):
     def is_time_to_record(self, now = None):
         if now is None:
             now = datetime.datetime.now()
-            now = now.replace(microsecond = 0)
+            # now = now.replace(microsecond = 0)
         for row in self.schedule_list:  # TODO: dictionary
-            schedule = datetime.datetime.strptime(row["start"], '%Y-%m-%d %H-%M-%S')
-            if now == schedule:
+            start = datetime.datetime.strptime(row["start"], '%Y-%m-%d %H-%M-%S')
+            if now >= start and now < start + datetime.timedelta(seconds = int(row["duration"])):
                 return row
                 # {"id": int(row["id"]), "duration": int(row["duration"]), "title": row["title"], "start": schedule}
         return None
