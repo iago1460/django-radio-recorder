@@ -58,10 +58,14 @@ class UploadThread(threading.Thread):
         session = None
         try:
             session = ftplib.FTP(self.config.get('FTP', 'server'), self.config.get('FTP', 'username'), self.config.get('FTP', 'password'))
-            print('Uploading ' + new_file_name + '...')
+            msg = 'Uploading ' + new_file_name + '...'
+            print msg
+            logging.info(msg)
             session.storbinary('STOR ' + new_file_name, file)
-            print('Upload finished.')
-            logging.info('Uploaded: ' + new_file_name)
+            msg = 'Uploaded: ' + new_file_name
+            print msg
+            logging.info(msg)
+
         except Exception:
             try:
                 if session:

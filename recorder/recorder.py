@@ -72,15 +72,19 @@ class RecorderThread(threading.Thread):
                     return_code = return_code_2
                 raise RecorderException('An exception occurred while starting your command: command exited with code ' + str(-return_code))
 
+            # Change priority
             try:
-                # Change priority
                 import psutil
-                p = psutil.Process(process_1.pid)
+                p1 = psutil.Process(process_1.pid)
+                p2 = psutil.Process(process_2.pid)
                 if sys.platform == 'win32':
-                    p.set_nice(psutil.REALTIME_PRIORITY_CLASS)
+                    p1.set_nice(psutil.REALTIME_PRIORITY_CLASS)
+                    p2.set_nice(psutil.REALTIME_PRIORITY_CLASS)
                 else:
-                    p.ionice(psutil.IOPRIO_CLASS_RT)  # set real time
-                    p.nice(-19)  # set very high priority
+                    p1.ionice(psutil.IOPRIO_CLASS_RT)  # set real time
+                    p1.nice(-19)  # set very high priority
+                    p2.ionice(psutil.IOPRIO_CLASS_RT)
+                    p2.nice(-19)
             except Exception:
                 print 'Warning: failed to set higher priority.'
 
