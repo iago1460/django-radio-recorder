@@ -45,15 +45,15 @@ class RecorderThread(threading.Thread):
         self.genre = ''
         self.comment = 'Made by RadioCo www.RadioCo.org'
         if 'title' in info and info['title']:
-            self.title = str(info['title'])
+            self.title = unicode(info['title'])
         if 'author' in info and info['author']:
-            self.author = str(info['author'])
+            self.author = unicode(info['author'])
         if 'album' in info and info['album']:
-            self.album = str(info['album'])
+            self.album = unicode(info['album'])
         if 'track' in info and info['track']:
             self.track = str(info['track'])
         if 'genre' in info and info['genre']:
-            self.genre = str(info['genre'])
+            self.genre = unicode(info['genre'])
 
         self.file_name = file_name
         self.file_path = file_path
