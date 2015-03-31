@@ -85,9 +85,12 @@ class RecorderThread(threading.Thread):
             return_code = process_1.poll()
             return_code_2 = process_2.poll()
             if return_code is not None or return_code_2 is not None:
-                if return_code_2:
-                    return_code = return_code_2
-                raise RecorderException('An exception occurred while starting your command: command exited with code ' + str(-return_code))
+                msg = 'An exception occurred while starting your command:'
+                if return_code is not None:
+                    msg += ' command_1 exited with code ' + str(return_code)
+                if return_code_2 is not None:
+                    msg += ' command_2 exited with code ' + str(return_code_2)
+                raise RecorderException(msg)
 
             # Change priority
             try:
@@ -110,9 +113,12 @@ class RecorderThread(threading.Thread):
                 return_code = process_1.poll()
                 return_code_2 = process_2.poll()
                 if return_code is not None or return_code_2 is not None:
-                    if return_code_2:
-                        return_code = return_code_2
-                    raise RecorderException('An exception occurred while executing your command: command exited with code ' + str(-return_code))
+                    msg = 'An exception occurred while executing your command:'
+                    if return_code is not None:
+                        msg += ' command_1 exited with code ' + str(return_code)
+                    if return_code_2 is not None:
+                        msg += ' command_2 exited with code ' + str(return_code_2)
+                    raise RecorderException(msg)
 
                 self.stop_event.wait(0.1)
             process_1.terminate()

@@ -86,7 +86,7 @@ def main(argv):
         if not offline_mode:
             if config.get('SETTINGS', 'token') == None or config.get('SETTINGS', 'token') == '':
                 raise ConfigParser.NoOptionError('token', 'SETTINGS')
-            make_sure_path_exists(config.get('SETTINGS', 'uploaded_folder'))
+            make_sure_path_exists(config.get('SETTINGS', 'finished_folder'))
             global upload_stop
             upload_stop = threading.Event()
             global upload_thread

@@ -1,0 +1,11 @@
+#########
+CHANGELOG
+#########
+
+
+***
+0.7
+***
+
+* Renamed "uploaded_folder" to "finished_folder" in settings.ini
+* Improved error message when audio recorder fails

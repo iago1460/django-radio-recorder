@@ -130,7 +130,7 @@ class UploadThread(threading.Thread):
                     if self.config.getboolean('SETTINGS', 'delete_files_after_upload'):
                         os.remove(file_path)
                     else:
-                        shutil.move(file_path, self.config.get('SETTINGS', 'uploaded_folder') + new_file_name)
+                        shutil.move(file_path, self.config.get('SETTINGS', 'finished_folder') + new_file_name)
                 else:
                     self.stop_event.wait(self.config.getint('SETTINGS', 'upload_time'))
 
