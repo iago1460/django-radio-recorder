@@ -1,0 +1,32 @@
+version: "3.6"
+services:
+
+  recorder:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: recorder
+    environment:
+      - PUID
+      - PGID
+      - TZ
+    volumes:
+#      - /etc/localtime:/etc/localtime:ro
+      - ${TMP_PATH}:/tmp/
+      - ${OUTPUT_PATH}:/output/
+    restart: unless-stopped
+    privileged: true
+    command: >
+      --radioco-endpoint "${RADIOCO_ENDPOINT}"
+      --radioco-token "${RADIOCO_TOKEN}"
+      --radioco-tz "${RADIOCO_TZ}"
+      --language "${LANGUAGE}"
+#      --mp3
+#      --jack-input
+#      --verbose
+    deploy:
+      resources:
+        reservations:
+          memory: 1g
+    extra_hosts:
+      - "local.radioco.org:${DOCKER_MACHINE_IP}"

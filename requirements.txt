@@ -1,2 +1,3 @@
-# Install all of our production dependencies only.
--r requirements/prod.txt
+aiohttp==3.6.2
+python-dateutil==2.8.1
+pytz==2019.3
