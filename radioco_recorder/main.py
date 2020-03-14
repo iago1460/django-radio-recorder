@@ -51,8 +51,6 @@ async def main():
         description=
         "RadioCo utility for recording podcasts.\n"
         "By default it will use arecord (recorder for ALSA soundcard driver) and oggenc to encode audio into the Ogg Vorbis format."
-        "Example usage:\n"
-        "python3 -m recorder --flag ..."
     )
     parser.add_argument(
         '--jack-input',

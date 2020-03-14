@@ -1,8 +1,6 @@
-================
 RadioCo recorder
 ================
-**A recorder program**.
-
+RadioCo utility for recording podcasts.
 This program can record live audio, it communicates with RadioCo automatically
 
 
